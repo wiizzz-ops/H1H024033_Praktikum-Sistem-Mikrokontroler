@@ -38,57 +38,103 @@
 # 3. Modifikasi program dengan menggabungkan antara UART dan I2C (keduanya sebagai output)
 
 #include <Wire.h>
+
 #include <LiquidCrystal_I2C.h>
+
 #include <Arduino.h>
 
+
 LiquidCrystal_I2C lcd(0x27, 16, 2);
+
 const int pinPot = A0;
 
+
 void setup() {
+
   Serial.begin(9600);
+  
   lcd.init();
+  
   lcd.backlight();
+  
 }
+
 
 void loop() {
+
   int nilaiADC = analogRead(pinPot);
+  
 
   // Kalkulasi matematika untuk voltase dan persentase
+  
   float voltase = (nilaiADC / 1023.0) * 5.0;
+  
   int persen = map(nilaiADC, 0, 1023, 0, 100);
+  
   int panjangBar = map(nilaiADC, 0, 1023, 0, 16);
+  
+
 
   // OUTPUT KE SERIAL MONITOR (Protokol UART)
+  
   // Menggunakan \t (tab) agar formatnya sejajar menyerupai tabel
+  
   Serial.print("ADC: ");
+  
   Serial.print(nilaiADC);
+  
   Serial.print("\t\tVolt: ");
+  
   Serial.print(voltase);
+  
   Serial.print(" V\t\tPersen: ");
+  
   Serial.print(persen);
+  
   Serial.println("%");
+  
+
 
   // OUTPUT KE LAYAR LCD (Protokol I2C)
+  
   // Baris 1: Menampilkan ADC dan Persen
+  
   lcd.setCursor(0, 0);
+  
   lcd.print("ADC: ");
+  
   lcd.print(nilaiADC);
+  
   lcd.print(" ");
+  
   lcd.print(persen);
+  
   lcd.print("%   "); // Spasi kosong untuk menghapus sisa karakter lama
+  
 
   // Baris 2: Menampilkan Bar Level
+  
   lcd.setCursor(0, 1);
+  
   for (int i = 0; i < 16; i++) {
+  
     if (i < panjangBar) {
+    
       lcd.print((char)255); // Cetak kotak penuh
+      
     } else {
+    
       lcd.print(" ");       // Cetak spasi kosong
+      
     }
+    
   }
+  
 
   delay(200); // Jeda pembacaan
+  
 }
+
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -97,17 +143,32 @@ void loop() {
 Kode di bawah ini mengelola dua antarmuka protokol komunikasi secara bersamaan. Data pembacaan ADC mentah dari potensiometer dikonversi, lalu dikirim ke Serial Monitor menggunakan UART dan ke layar LCD menggunakan I2C.
 
 #include <Wire.h> Mengimpor pustaka dasar untuk komunikasi I2C (Two-Wire Interface). 
-#include <LiquidCrystal_I2C.h> Mengimpor pustaka khusus untuk mengendalikan modul *backpack* LCD I2C. 
+
+#include <LiquidCrystal_I2C.h> Mengimpor pustaka khusus untuk mengendalikan modul backpack LCD I2C. 
+
 LiquidCrystal_I2C lcd(0x27, 16, 2); Menginisialisasi objek layar LCD dengan alamat identitas I2C `0x27`, berukuran 16 kolom dan 2 baris. 
+
 const int pinPot = A0; Menetapkan Pin Analog 0 (A0) sebagai jalur masuk data dari kaki tengah potensiometer. 
-Serial.begin(9600); Mengaktifkan protokol UART untuk mengirim data ke komputer dengan kecepatan *baud rate* 9600 bps. 
+
+Serial.begin(9600); Mengaktifkan protokol UART untuk mengirim data ke komputer dengan kecepatan baud rate 9600 bps. 
+
 lcd.init(); lcd.backlight(); Mengirim perintah bangun (*startup*) ke *chip* LCD dan menyalakan lampu latarnya. 
+
 int nilaiADC = analogRead(pinPot); Fungsi inti ADC: mengubah voltase analog menjadi angka biner diskrit dengan rentang 0 hingga 1023. 
-float voltase = (nilaiADC / 1023.0) * 5.0; Mengubah kembali nilai ADC ke skala tegangan aslinya (maksimal 5 Volt) dalam tipe desimal (*float*). 
+
+float voltase = (nilaiADC / 1023.0) * 5.0; Mengubah kembali nilai ADC ke skala tegangan aslinya (maksimal 5 Volt) dalam tipe desimal (float). 
+
 int persen = map(nilaiADC, 0, 1023, 0, 100); Menyesuaikan batas skala awal 0-1023 menjadi skala persentase 0-100 menggunakan fungsi `map()`. 
+
 Serial.print("ADC: "); ... Serial.println("%"); Blok pengiriman data menggunakan USART internal Arduino ke *Serial Monitor*. `\t` digunakan untuk memberi efek *tabulasi* agar tampilan di layar rapi memanjang ke samping layaknya tabel. 
+
 lcd.setCursor(0, 0); Menempatkan titik mulai ketik (*cursor*) pada kolom 1 (indeks 0), baris 1 (indeks 0) LCD. 
+
 lcd.print(nilaiADC); Menembakkan data angka ke layar LCD menggunakan jalur SDA dan SCL. 
+
 lcd.setCursor(0, 1); Memindah posisi cetak ke kolom 1, baris 2 untuk mempersiapkan efek loading bar. 
+
 for (int i = 0; i < 16; i++) { ... } Memulai perulangan 16 kali, mewakili 16 kotak karakter di baris kedua LCD. 
+
 lcd.print((char)255); Jika posisi iterasi lebih kecil dari `panjangBar`, cetak ASCII bernilai 255 (berbentuk kotak balok penuh). 
+
